@@ -1,6 +1,9 @@
 var https = require('https');
 var http = require('http');
 var zlib = require('zlib');
+
+var cachedCredentials;
+
 module.exports = function (u, p, d, s, o, sId) {
     var credentials,
         userName = u,
@@ -8,18 +11,18 @@ module.exports = function (u, p, d, s, o, sId) {
         database = d,
         rootServer = s || 'my.geotab.com',
         directServer = rootServer,
-        tryCount = 0,
         options = {
             ssl: !o || o.ssl === undefined ? true : o.ssl,
             compression: o && o.hasOwnProperty('compression') ? o.compression : 'gzip'
         },
-        sessionId = sId;
+        sessionId = sId,
+        tryCount = 0;
 
     if (!userName) {
         throw new Error('Must supply userName')
     }
 
-    if (!!sessionId) {
+    if (sessionId) {
         if (!database || directServer === 'my.geotab.com') {
             throw new Error('Must supply database and server')
         }
@@ -32,6 +35,11 @@ module.exports = function (u, p, d, s, o, sId) {
         }
     } else if (!password) {
         throw new Error('Must supply password')
+    }
+
+    // use cached credentials if they exist and sessionId was not passed in
+    if (!sessionId && cachedCredentials && cachedCredentials[database]) {
+        credentials = cachedCredentials[database];
     }
 
     var post = function (method, params, callback) {
@@ -213,6 +221,15 @@ module.exports = function (u, p, d, s, o, sId) {
 
         post('Authenticate', params, function (err, data) {
             if (!err) {
+                // build credentials for database and cache
+                if (!cachedCredentials) {
+                    cachedCredentials = {}
+                }
+                cachedCredentials[database] = {
+                    ...data.credentials,
+                    serverName: data.path
+                }
+
                 if (data.path && data.path !== 'ThisServer') {
                     directServer = data.path;
                 }
