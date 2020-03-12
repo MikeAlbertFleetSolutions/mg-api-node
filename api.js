@@ -221,7 +221,7 @@ module.exports = function (u, p, d, s, o, sId) {
 
         post('Authenticate', params, function (err, data) {
             if (err) {
-                console.error(`error logging in for database: ${database} on server: ${server}`)
+                console.error(`error logging in for database: ${database} on server: ${rootServer}`)
             } else {
                 // build credentials for database and cache
                 if (!cachedCredentials) {
