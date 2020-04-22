@@ -165,6 +165,7 @@ module.exports = function (u, p, d, s, o, sId) {
             if (err && err.errors) {
                 // check if any errors require re-authentication
                 err.errors.forEach(function (error) {
+                    console.error(JSON.stringify(error));
                     if (error.name.toLowerCase().indexOf("invaliduserexception") > -1 || error.name.toLowerCase().indexOf("dbunavailablexception") > -1) {
                         reauthenticate = true;
                     }
@@ -223,10 +224,10 @@ module.exports = function (u, p, d, s, o, sId) {
             if (err) {
                 if (cachedCredentials && cachedCredentials[database]) {
                     console.error(`error logging in for database: ${database} on server: ${cachedCredentials[database].serverName}`);
+                    delete cachedCredentials[database];
                 } else {
                     console.error(`error logging in for database: ${database} on rootserver: ${rootServer}`);
                 }
-                delete cachedCredentials[database];
             } else {
                 // build credentials for database and cache
                 if (!cachedCredentials) {
